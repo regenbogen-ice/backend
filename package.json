@@ -9,6 +9,7 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^17.0.19",
+    "@types/node-fetch": "^2.6.1",
     "typescript": "^4.5.5"
   },
   "dependencies": {
@@ -16,6 +17,8 @@
     "express": "^4.17.3",
     "knex": "^1.0.3",
     "mysql2": "^2.3.3",
+    "node-fetch": "^3.2.0",
+    "rabbit-queue": "^5.4.1",
     "redis": "^4.0.4"
   },
   "scripts": {

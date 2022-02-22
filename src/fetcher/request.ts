@@ -1,4 +1,5 @@
-import { Cache } from '../cache'
+import fetch, { Response } from 'node-fetch'
+import { Cache } from '../cache.js'
 
 export const ApiModule = {
     MARUDOR: process.env.MARUDOR_API_PATH || "https://marudor.de/api"
@@ -6,7 +7,7 @@ export const ApiModule = {
 
 type ApiModuleType = string
 
-const checkRequest = async (path: string, response: Response, ignoreStatusCodes?: number[]) => {
+const checkRequest = async (path: string, response: Response, ignoreStatusCodes?: number[]): Promise<any> => {
     if (ignoreStatusCodes?.includes(response.status)) {
         return null
     }
@@ -20,10 +21,10 @@ const checkRequest = async (path: string, response: Response, ignoreStatusCodes?
 export const request = async (
     apiModule: ApiModuleType,
     path: string,
-    args: { [key: string]: string },
+    args: { [key: string]: string | null },
     options?: { ignoreStatusCodes?: number[], cache?: Cache, cacheTTL?: number, useGetArguments?: string[] }) => {
     for (const [argName, argValue] of Object.entries(args)) {
-        if (path.includes(`[${argName}]`)) {
+        if (path.includes(`[${argName}]`) && argValue) {
             path = path.replace(`[${argName}]`, argValue)
         }
     }
@@ -31,21 +32,23 @@ export const request = async (
         const getArguments: { [key: string]: string } = {}
         for (const getArgument of options.useGetArguments) {
             if (args[getArgument]) {
-                getArguments[getArgument] = args[getArgument]
+                getArguments[getArgument] = args[getArgument]!
             }
         }
-        path = `${path}?${new URLSearchParams(getArguments)}`
+        if (Object.keys(getArguments).length > 0)
+            path = `${path}?${new URLSearchParams(getArguments)}`
     }
     path = `${apiModule}${path}`
     if (options?.cache) {
-        const cachedResponse = options.cache.get(path)
+        const cachedResponse = await options.cache.get(path)
         if (cachedResponse) {
             return cachedResponse
         }
     }
     const response = await checkRequest(path, await fetch(path), options?.ignoreStatusCodes)
     if (response && options?.cache) {
-        options.cache.set(path, response, options.cacheTTL)
+        // TODO logger
+        options.cache.set(path, response, options.cacheTTL).catch(e => console.error(`Error while caching ${path}: ${e}`))
     }
     return response
 }
