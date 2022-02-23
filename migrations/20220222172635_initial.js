@@ -8,7 +8,7 @@
 export const up = async (knex) => {
    await knex.schema.createTable('train_vehicle', (table) => {
        table.increments('id')
-       table.integer('train_vehicle_number').notNullable()
+       table.integer('train_vehicle_number').notNullable().unique()
        table.string('train_vehicle_name', 255)
        table.string('train_type', 3).notNullable()
        table.integer('building_series').notNullable()
@@ -19,9 +19,9 @@ export const up = async (knex) => {
        table.increments('id')
        table.string('train_type', 3).notNullable()
        table.integer('train_number').notNullable()
-       table.integer('origin_station').notNullable()
-       table.integer('destination_station').notNullable()
-       table.timestamp('scheduled_departure').notNullable()
+       table.integer('origin_station')
+       table.integer('destination_station')
+       table.timestamp('initial_departure').notNullable()
        table.timestamp('timestamp').defaultTo(knex.fn.now())
        table.timestamp('updated').defaultTo(knex.fn.now())
    })
@@ -69,6 +69,7 @@ export const up = async (knex) => {
 
    await knex.schema.createTable('coach', (table) => {
        table.increments('id')
+       table.integer('index').notNullable()
        table.integer('coach_sequence_id').unsigned().notNullable()
        table.foreign('coach_sequence_id').references('id').inTable('coach_sequence')
        table.string('uic', 12).notNullable()
@@ -83,6 +84,7 @@ export const up = async (knex) => {
        table.foreign('train_trip_id').references('id').inTable('train_trip')
        table.integer('coach_id').unsigned().notNullable()
        table.foreign('coach_id').references('id').inTable('coach')
+       table.integer('identification_number')
    })
 }
 
