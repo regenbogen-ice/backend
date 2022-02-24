@@ -4,7 +4,7 @@ import { ApiModule, request } from './request.js'
 const marudorCache = new Cache('marudor', 60)
 
 type MarudorStationPlace = { evaNumber: string, name: string }
-type MarudorIrisAbfahrtenResponse = { departures: {
+type MarudorDeparture = {
     initialDeparture: string,
     arrival: {
         scheduledPlatform: string,
@@ -50,7 +50,8 @@ type MarudorIrisAbfahrtenResponse = { departures: {
         longDistance: boolean,
         operator: { name: string, icoX: number }
     }
-}[]}
+}
+type MarudorIrisAbfahrtenResponse = { departures: MarudorDeparture[], wings: { [key: string]: MarudorDeparture } }
 type MarudorCoachSequenceType = {
     stop: { stopPlace: { name: string, evaNumber: string } },
     product: { number: string, type: string, line: string },

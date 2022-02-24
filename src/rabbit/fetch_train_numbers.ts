@@ -1,9 +1,7 @@
-import { debug } from 'console'
-import { DateTime } from 'luxon'
 import database from '../database.js'
 import { marudorToSQL } from '../dateTimeFormat.js'
 import { getIRISDepartures } from '../fetcher/marudor.js'
-import { error } from '../logger.js'
+import { debug, error } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 import staticConfig from '../staticConfig.js'
 import { rabbit } from './rabbit.js'
@@ -17,11 +15,22 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
             error(`getIRISDepartures for evaNumber ${evaNumber} failed. The function returned null.`)
             continue
         }
-        const departures = departuresResponse.departures.filter(e =>
-            staticConfig.FETCHABLE_TRAIN_TYPES.includes(e.train.type) && !e.cancelled && e.reihung && !e.substitute && e.departure && !alreadyFetched.includes(e.train.name))
+        const allDepartures = departuresResponse.departures
+        allDepartures.concat(Object.values(departuresResponse.wings))
+        const departures = allDepartures.filter(e =>
+            staticConfig.FETCHABLE_TRAIN_TYPES.includes(e.train.type) && e.reihung && !e.substitute && e.departure && !alreadyFetched.includes(e.train.name))
         debug(`Fetched ${departures.length} train_trips on evaNumber ${evaNumber}.`)
         for(const train of departures) {
             alreadyFetched.push(train.train.name)
+            if (train.cancelled) {
+                debug(`${train.train.name} was cancelled.`)
+                await database('train_trip').where({
+                    train_type: train.train.type,
+                    train_number: +train.train.number,
+                    initial_departure: marudorToSQL(train.initialDeparture)    
+                }).delete()
+                continue
+            }
             const existingTrain = await database('train_trip').where({
                 train_type: train.train.type,
                 train_number: +train.train.number,
@@ -38,13 +47,13 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                     continue
                 }
             } else {
-                debug(`Created train_trip ${trainId}.`)
                 const databaseTrain = await database('train_trip').insert({
                     train_type: train.train.type,
                     train_number: +train.train.number,
                     initial_departure: marudorToSQL(train.initialDeparture)
                 })
                 trainId = databaseTrain[0]
+                debug(`Created train_trip ${trainId}.`)
             }
 
             await rabbit.publish('fetch_coach_sequence', {
