@@ -43,7 +43,6 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 const trainTripVehicles = await database('train_trip_vehicle').where({ train_trip_id: trainId }).select('id')
                 if (trainTripVehicles.length > 0) {
                     debug(`Train coaches & details already fetched.`)
-                    // TODO train coaches & details ttl
                     continue
                 }
             } else {
