@@ -60,7 +60,6 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 trainId,
                 trainNumber: +train.train.number,
                 trainType: train.train.type,
-                initialDeparture: train.initialDeparture,
                 evaDeparture: train.departure.scheduledTime,
                 evaNumber
             })
@@ -68,7 +67,8 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 trainId,
                 trainNumber: +train.train.number,
                 trainType: train.train.type,
-                initialDeparture: train.initialDeparture
+                evaDeparture: train.departure.scheduledTime,
+                evaNumber
             })
         }
     }

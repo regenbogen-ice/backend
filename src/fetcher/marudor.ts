@@ -76,8 +76,33 @@ type MarudorCoachSequenceType = {
         }[]
     }[] },
     direction: boolean
-
 }
+
+type MarudorDetailsType = {
+    cancelled: boolean,
+    changeDuration: number,
+    finalDestination: string,
+    jid: string,
+    product: {
+        name: string,
+        number: string,
+        icoX: number,
+        cls: number,
+        oprX: number,
+        addName: string,
+        nameS: string,
+        matchId: string
+    },
+    stops: {
+        arrival: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, reihung: boolean, cancalled: boolean },
+        departure: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, reihung: boolean, cancalled: boolean },
+        station: { title: string, id: string },
+        auslastung: { first: number, second: string },
+        additional: boolean,
+        cancelled: boolean
+    }[]
+}
+
 export const getStationByEva = async (evaNumber: number): Promise<MarudorStationPlace | void> => 
     await request(ApiModule.MARUDOR, '/stopPlace/v1/[evaNumber]', { evaNumber: String(evaNumber) }, { ignoreStatusCodes: [ 404 ], cache: marudorCache, cacheTTL: 60 * 60 * 24 * 30 })
 
@@ -86,3 +111,6 @@ export const getIRISDepartures = async (evaNumber: number, lookahead?: number, l
 
 export const getCoachSequence = async (trainNumber: number, departure: string, evaNumber: number): Promise<MarudorCoachSequenceType | void> =>
     await request(ApiModule.MARUDOR, '/reihung/v4/wagen/[trainNumber]', { trainNumber: String(trainNumber), departure, evaNumber: String(evaNumber) }, { ignoreStatusCodes: [404], cache: marudorCache, cacheTTL: 60 * 10, useGetArguments: ['departure', 'evaNumber']})
+
+export const getTrainDetails = async (trainName: string, station: number, date: string): Promise<MarudorDetailsType | void> => 
+    await request(ApiModule.MARUDOR, '/hafas/v2/details/[trainName]', { trainName, station: String(station), date }, { cache: marudorCache, cacheTTL: 60 * 5, useGetArguments: [ 'station', 'date'], ignoreStatusCodes: [404]})

@@ -23,7 +23,6 @@ export const up = async (knex) => {
        table.integer('destination_station')
        table.timestamp('initial_departure').notNullable()
        table.timestamp('timestamp').defaultTo(knex.fn.now())
-       table.timestamp('updated').defaultTo(knex.fn.now())
    })
 
    await knex.schema.createTable('train_trip_route', (table) => {
@@ -31,12 +30,12 @@ export const up = async (knex) => {
        table.integer('train_trip_id').unsigned().notNullable()
        table.foreign('train_trip_id').references('id').inTable('train_trip')
        table.integer('index').notNullable()
-       table.boolean('canceled').notNullable().defaultTo(false)
+       table.boolean('cancelled').notNullable().defaultTo(false)
        table.integer('station').notNullable()
-       table.timestamp('scheduled_departure').notNullable()
-       table.timestamp('departure').notNullable()
-       table.timestamp('scheduled_arrival').notNullable()
-       table.timestamp('arrival').notNullable()
+       table.timestamp('scheduled_departure')
+       table.timestamp('departure')
+       table.timestamp('scheduled_arrival')
+       table.timestamp('arrival')
    })
 
    await knex.schema.createTable('train_trip_vehicle', (table) => {

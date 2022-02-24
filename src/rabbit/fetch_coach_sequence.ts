@@ -3,7 +3,7 @@ import { getCoachSequence } from '../fetcher/marudor.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 
-type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: string, initialDeparture: string, evaDeparture: string, evaNumber: number }
+type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: string, evaDeparture: string, evaNumber: number }
 
 
 const getTrainVehicle = async (train_vehicle_number: number, train_vehicle_name: string, train_type: string, building_series: number): Promise<number> => {
@@ -74,13 +74,11 @@ const createTrainTripVehicle = async (trainId: number, groupIndex: number, train
 
 export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSequence) => {
     const coachSequence = await getCoachSequence(msg.trainNumber, msg.evaDeparture, msg.evaNumber)
-    if (!coachSequence) {
-        return
-    }
+    if (!coachSequence) return
     
     for (const [originalGroupIndex, coaches] of coachSequence.sequence.groups.entries()) {
         if (+coaches.number != msg.trainNumber) continue
-        const groupIndex = coachSequence.direction ? originalGroupIndex : -originalGroupIndex + coachSequence.sequence.groups.length - 1
+        const groupIndex = coachSequence.direction ? originalGroupIndex : coachSequence.sequence.groups.length - 1
         if (coaches.name.includes('planned') || !coaches.baureihe) {
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
             continue
