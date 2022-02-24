@@ -1,24 +1,24 @@
 import { Rabbit } from 'rabbit-queue'
+import { error, info, log } from '../logger.js'
 import { fetch_coach_sequence } from './fetch_coach_sequence.js'
 import { fetch_train_numbers } from './fetch_train_numbers.js'
 
 export const rabbit = new Rabbit(process.env.RABBIT_URL || 'amqp://localhost')
 
-// TODO logger
 
 rabbit.on('connected', () => {
-    console.log('Rabbit connected')
+    info(`Rabbit connected,`)
 })
 
 rabbit.on('disconnect', (err = new Error(`Rabbitmq disconnected.`)) => {
-    console.error(err)
+    error(`Disconnected from rabbit: ${err}. Trying to reconnect.`)
     setTimeout(() => rabbit.reconnect(), 100)
 })
 
 rabbit.on('log', (component, level, ...args) => {
-    // TODO logger
-    if (level != 'debug') console.log(`[${level}] ${component}`, ...args)
+    if (level != 'trace') log(level, `Rabbit: ${component} ${args.join(' ')}`)
 })
 
 await rabbit.createQueue('fetch_train_numbers', {}, fetch_train_numbers)
 await rabbit.createQueue('fetch_coach_sequence', {}, fetch_coach_sequence)
+info(`Created rabbit queues.`)

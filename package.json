@@ -21,7 +21,8 @@
     "mysql2": "^2.3.3",
     "node-fetch": "^3.2.0",
     "rabbit-queue": "^5.4.1",
-    "redis": "^4.0.4"
+    "redis": "^4.0.4",
+    "shoutrrrd-js": "^1.0.3"
   },
   "scripts": {
     "build": "tsc",

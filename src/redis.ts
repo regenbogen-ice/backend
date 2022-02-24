@@ -1,13 +1,14 @@
 import { createClient } from 'redis'
+import { debug, error } from './logger.js'
 
 const client = createClient({
     url: process.env.REDIS_URL
 })
 
-// TODO logger
-client.on('error', (err) => console.error(`Redis error: ${err}`))
+client.on('error', (err) => error(`Redis error: ${err}`))
 
 await client.connect()
+debug(`Redis ${process.env.REDIS_URL} connected.`)
 
 
 export default client

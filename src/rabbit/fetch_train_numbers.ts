@@ -1,7 +1,9 @@
+import { debug } from 'console'
 import { DateTime } from 'luxon'
 import database from '../database.js'
 import { marudorToSQL } from '../dateTimeFormat.js'
 import { getIRISDepartures } from '../fetcher/marudor.js'
+import { error } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 import staticConfig from '../staticConfig.js'
 import { rabbit } from './rabbit.js'
@@ -12,11 +14,12 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
     for (const evaNumber of msg.evaNumbers) {
         const departuresResponse = await getIRISDepartures(evaNumber, staticConfig.IRIS_LOOKAHEAD)
         if (!departuresResponse) {
-            // TODO: error
+            error(`getIRISDepartures for evaNumber ${evaNumber} failed. The function returned null.`)
             continue
         }
         const departures = departuresResponse.departures.filter(e =>
             staticConfig.FETCHABLE_TRAIN_TYPES.includes(e.train.type) && !e.cancelled && e.reihung && !e.substitute && e.departure && !alreadyFetched.includes(e.train.name))
+        debug(`Fetched ${departures.length} train_trips on evaNumber ${evaNumber}.`)
         for(const train of departures) {
             alreadyFetched.push(train.train.name)
             const existingTrain = await database('train_trip').where({
@@ -27,11 +30,15 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
             let trainId = null
             if (existingTrain.length > 0) {
                 trainId = existingTrain[0].id
+                debug(`Train_trip ${trainId} already exists.`)
                 const trainTripVehicles = await database('train_trip_vehicle').where({ train_trip_id: trainId }).select('id')
                 if (trainTripVehicles.length > 0) {
+                    debug(`Train coaches & details already fetched.`)
+                    // TODO train coaches & details ttl
                     continue
                 }
             } else {
+                debug(`Created train_trip ${trainId}.`)
                 const databaseTrain = await database('train_trip').insert({
                     train_type: train.train.type,
                     train_number: +train.train.number,

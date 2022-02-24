@@ -1,5 +1,6 @@
 import fetch, { Response } from 'node-fetch'
 import { Cache } from '../cache.js'
+import { error } from '../logger.js'
 
 export const ApiModule = {
     MARUDOR: process.env.MARUDOR_API_PATH || "https://marudor.de/api"
@@ -47,8 +48,7 @@ export const request = async (
     }
     const response = await checkRequest(path, await fetch(path), options?.ignoreStatusCodes)
     if (response && options?.cache) {
-        // TODO logger
-        options.cache.set(path, response, options.cacheTTL).catch(e => console.error(`Error while caching ${path}: ${e}`))
+        options.cache.set(path, response, options.cacheTTL).catch(e => error(`Error while caching ${path}: ${e}`))
     }
     return response
 }

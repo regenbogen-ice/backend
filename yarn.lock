@@ -544,7 +544,7 @@ node-domexception@^1.0.0:
   resolved "https://registry.yarnpkg.com/node-domexception/-/node-domexception-1.0.0.tgz#6888db46a1f71c0b76b3f7555016b63fe64766e5"
   integrity sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==
 
-node-fetch@^3.2.0:
+node-fetch@^3.1.0, node-fetch@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-3.2.0.tgz#59390db4e489184fa35d4b74caf5510e8dfbaf3b"
   integrity sha512-8xeimMwMItMw8hRrOl3C9/xzU49HV/yE6ORew/l+dxWimO5A4Ra8ld2rerlJvc/O7et5Z1zrWsPX43v1QBjCxw==
@@ -745,6 +745,13 @@ setprototypeof@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/setprototypeof/-/setprototypeof-1.2.0.tgz#66c9a24a73f9fc28cbe66b09fed3d33dcaf1b424"
   integrity sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==
+
+shoutrrrd-js@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/shoutrrrd-js/-/shoutrrrd-js-1.0.3.tgz#aae164b88679e2d8488dedaf69ac6364277adb33"
+  integrity sha512-bc13acMYEsFscjZ8jDklMq4sCbIA1hY3MWZ0yUXks+2C0oJ0NNqG7lgqplMoXy/tiLe+1ppwmDA6B5lq/YEp/Q==
+  dependencies:
+    node-fetch "^3.1.0"
 
 sqlstring@^2.3.2:
   version "2.3.2"
