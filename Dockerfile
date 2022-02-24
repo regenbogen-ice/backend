@@ -14,8 +14,9 @@ ENV MYSQL_PASSWORD=
 COPY ./package.json .
 COPY ./yarn.lock .
 
-RUN yarn install --pure-lockfile
+RUN yarn install --production=false
 
+COPY ./tsconfig.json .
 COPY ./src ./src
 COPY ./migrations ./migrations
 COPY ./knexfile.js .
