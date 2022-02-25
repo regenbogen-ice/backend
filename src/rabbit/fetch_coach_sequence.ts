@@ -31,11 +31,12 @@ const checkCoachIntegrity = async (trainVehicleId: number, coaches: { uic: strin
     for (const [coachIndex, coach] of coaches.entries()) {
         const databaseCoach = await database('coach').where({
             coach_sequence_id: coachSequenceId,
-            index: coachIndex,
             uic: coach.uic,
             category: coach.category,
             class: coach.class,
             type: coach.type
+        }).andWhere((builder) => {
+            builder.where({ index: coachIndex }).orWhere({ index: coaches.length - coachIndex - 1 })
         }).first()
         if (!databaseCoach) return false
     }
@@ -78,7 +79,7 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
     
     for (const [originalGroupIndex, coaches] of coachSequence.sequence.groups.entries()) {
         if (+coaches.number != msg.trainNumber) continue
-        const groupIndex = coachSequence.direction ? originalGroupIndex : coachSequence.sequence.groups.length - 1
+        const groupIndex = coachSequence.direction ? originalGroupIndex : coachSequence.sequence.groups.length -originalGroupIndex - 1
         if (coaches.name.includes('planned') || !coaches.baureihe) {
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
             continue
