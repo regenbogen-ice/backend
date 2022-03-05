@@ -5,10 +5,10 @@ import { getTrainDetails } from '../fetcher/marudor.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 
-type FetchTrainDetails = { trainId: number, trainNumber: number, trainType: number, evaDeparture: string, evaNumber: number }
+type FetchTrainDetails = { trainId: number, trainNumber: number, trainType: number, initialDeparture: string, evaNumber: number }
 
 export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDetails) => {
-    const trainDetails = await getTrainDetails(msg.trainType + String(msg.trainNumber), msg.evaNumber, msg.evaDeparture)
+    const trainDetails = await getTrainDetails(msg.trainType + String(msg.trainNumber), msg.evaNumber, msg.initialDeparture)
     if (!trainDetails) return
     const stops = trainDetails.stops.map((stop, index) => {
         return {

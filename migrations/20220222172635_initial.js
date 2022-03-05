@@ -93,5 +93,11 @@ export const up = async (knex) => {
  */
 
 export const down = async (knex) => {
-    
+    await knex.schema.dropTable('train_vehicle')
+    await knex.schema.dropTable('train_trip')
+    await knex.schema.dropTable('train_trip_vehicle')
+    await knex.schema.dropTable('train_trip_vehicle_change')
+    await knex.schema.dropTable('coach_sequence')
+    await knex.schema.dropTable('coach')
+    await knex.schema.dropTable('train_trip_coaches_identification')
 }
