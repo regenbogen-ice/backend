@@ -67,7 +67,8 @@ const createTrainTripVehicle = async (trainId: number, groupIndex: number, train
         debug(`Train vehicle changed from ${oldTrainTripVehicle.train_vehicle_id}.`)
         await database('train_trip_vehicle').where({ id: oldTrainTripVehicle.id }).delete()
         await database('train_trip_vehicle_change').insert({ train_trip_id: trainId, train_vehicle_id: oldTrainTripVehicle.train_vehicle_id, group_index: groupIndex, original_timestamp: oldTrainTripVehicle.timestamp })
-    }
+    } else if (oldTrainTripVehicle)
+        return
     await database('train_trip_vehicle').insert({
         train_trip_id: trainId,
         group_index: groupIndex,
