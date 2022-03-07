@@ -1,4 +1,6 @@
+import { DateTime } from 'luxon'
 import database from '../database.js'
+import { toSQLTimestamp } from '../dateTimeFormat.js'
 import { getCoachSequence } from '../fetcher/marudor.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
@@ -98,4 +100,5 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
         }
         await createTrainTripVehicle(msg.trainId, groupIndex, trainVehicleId)
     }
+    await database('train_trip').where({ id: msg.trainId }).update({ coach_sequence_update_expire: toSQLTimestamp(DateTime.now().plus({ hours: 1 })) })
 })

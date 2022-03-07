@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import database from '../database.js'
 import { marudorToSQL } from '../dateTimeFormat.js'
 import { getIRISDepartures } from '../fetcher/marudor.js'
@@ -35,15 +36,18 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 train_type: train.train.type,
                 train_number: +train.train.number,
                 initial_departure: marudorToSQL(train.initialDeparture)
-            }).select('id')
+            }).select(['id', 'routes_update_expire', 'coach_sequence_update_expire'])
             let trainId = null
+            let fetch_coaches = true
+            let fetch_details = true
             if (existingTrain.length > 0) {
                 trainId = existingTrain[0].id
                 debug(`Train_trip ${trainId} already exists.`)
-                const trainTripVehicles = await database('train_trip_vehicle').where({ train_trip_id: trainId }).select('id')
-                if (trainTripVehicles.length > 0) {
-                    debug(`Train coaches & details already fetched.`)
-                    continue
+                if (existingTrain[0].coach_sequence_update_expire && DateTime.fromJSDate(existingTrain[0].coach_sequence_update_expire) > DateTime.now()) {
+                    fetch_coaches = false
+                }
+                if (existingTrain[0].routes_update_expire && DateTime.fromJSDate(existingTrain[0].routes_update_expire) > DateTime.now()) {
+                    fetch_details = false
                 }
             } else {
                 const databaseTrain = await database('train_trip').insert({
@@ -54,21 +58,22 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 trainId = databaseTrain[0]
                 debug(`Created train_trip ${trainId}.`)
             }
-
-            await rabbit.publish('fetch_coach_sequence', {
-                trainId,
-                trainNumber: +train.train.number,
-                trainType: train.train.type,
-                evaDeparture: train.departure.scheduledTime,
-                evaNumber
-            })
-            await rabbit.publish('fetch_train_details', {
-                trainId,
-                trainNumber: +train.train.number,
-                trainType: train.train.type,
-                initialDeparture: train.initialDeparture,
-                evaNumber
-            })
+            if (fetch_coaches)
+                await rabbit.publish('fetch_coach_sequence', {
+                    trainId,
+                    trainNumber: +train.train.number,
+                    trainType: train.train.type,
+                    evaDeparture: train.departure.scheduledTime,
+                    evaNumber
+                })
+            if (fetch_details)
+                await rabbit.publish('fetch_train_details', {
+                    trainId,
+                    trainNumber: +train.train.number,
+                    trainType: train.train.type,
+                    initialDeparture: train.initialDeparture,
+                    evaNumber
+                })
         }
     }
 })

@@ -63,5 +63,6 @@ export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDeta
             }
         }
     }
+    await database('train_trip').where({ id: msg.trainId }).update({ routes_update_expire: toSQLTimestamp(DateTime.now().plus({ minutes: 20 })) })
 
 })
