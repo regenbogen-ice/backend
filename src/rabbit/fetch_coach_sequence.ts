@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import database from '../database.js'
 import { toSQLTimestamp } from '../dateTimeFormat.js'
-import { getCoachSequence } from '../fetcher/marudor.js'
+import { getCoachSequence, getEvaByStation } from '../fetcher/marudor.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 
@@ -61,18 +61,27 @@ const createCoaches = async (trainVehicleId: number, coaches: { uic: string, cat
     }
 }
 
-const createTrainTripVehicle = async (trainId: number, groupIndex: number, trainVehicleId: number) => {
-    const oldTrainTripVehicle = await database('train_trip_vehicle').where({ train_trip_id: trainId, group_index: groupIndex }).select(['id', 'train_vehicle_id', 'timestamp']).first()
+const createTrainTripVehicle = async (trainId: number, groupIndex: number, trainVehicleId: number, origin: number | null, destination: number | null) => {
+    const oldTrainTripVehicle = await database('train_trip_vehicle').where({ train_trip_id: trainId, group_index: groupIndex }).select(['id', 'train_vehicle_id', 'timestamp', 'origin', 'destination']).first()
     if (oldTrainTripVehicle && oldTrainTripVehicle.train_vehicle_id != trainVehicleId) {
         debug(`Train vehicle changed from ${oldTrainTripVehicle.train_vehicle_id}.`)
         await database('train_trip_vehicle').where({ id: oldTrainTripVehicle.id }).delete()
-        await database('train_trip_vehicle_change').insert({ train_trip_id: trainId, train_vehicle_id: oldTrainTripVehicle.train_vehicle_id, group_index: groupIndex, original_timestamp: oldTrainTripVehicle.timestamp })
+        await database('train_trip_vehicle_change').insert({ train_trip_id: trainId, train_vehicle_id: oldTrainTripVehicle.train_vehicle_id, group_index: groupIndex, original_timestamp: oldTrainTripVehicle.timestamp, origin, destination })
+    } else if (oldTrainTripVehicle && (oldTrainTripVehicle.origin != origin || oldTrainTripVehicle.destination != destination)) {
+        debug(`Origin or destination on train_trip_vehicle ${oldTrainTripVehicle.id} changed. Updating.`)
+        await database('train_trip_vehicle').where({ id: oldTrainTripVehicle.id }).update({
+            origin,
+            destination
+        })
+        return
     } else if (oldTrainTripVehicle)
         return
     await database('train_trip_vehicle').insert({
         train_trip_id: trainId,
         group_index: groupIndex,
-        train_vehicle_id: trainVehicleId
+        train_vehicle_id: trainVehicleId,
+        origin,
+        destination
     })
 }
 
@@ -99,7 +108,11 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
                     await database.raw('INSERT INTO train_trip_coaches_identification (train_trip_id, coach_id, identification_number) SELECT ?, coach.id, ? FROM coach WHERE uic = ?', [msg.trainId, coach.identificationNumber || null, coach.uic])
             }
         }
-        await createTrainTripVehicle(msg.trainId, groupIndex, trainVehicleId)
+        const originStation = coaches.originName ? await getEvaByStation(coaches.originName) : null
+        const origin = originStation ? +originStation.evaNumber : null
+        const destinationStation = coaches.destinationName ? await getEvaByStation(coaches.destinationName) : null
+        const destination = destinationStation ? +destinationStation.evaNumber : null
+        await createTrainTripVehicle(msg.trainId, groupIndex, trainVehicleId, origin, destination)
     }
     await database('train_trip').where({ id: msg.trainId }).update({ coach_sequence_update_expire: toSQLTimestamp(DateTime.now().plus({ hours: 1 })) })
 })

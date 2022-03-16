@@ -106,6 +106,13 @@ type MarudorDetailsType = {
 export const getStationByEva = async (evaNumber: number): Promise<MarudorStationPlace | void> => 
     await request(ApiModule.MARUDOR, '/stopPlace/v1/[evaNumber]', { evaNumber: String(evaNumber) }, { ignoreStatusCodes: [ 404 ], cache: marudorCache, cacheTTL: 60 * 60 * 24 * 30 })
 
+    
+export const getEvaByStation = async (station: string): Promise<MarudorStationPlace | void> => {
+    const response = await request(ApiModule.MARUDOR, '/stopPlace/v1/search/[station]', { station, max: '1' }, { useGetArguments: ['max'], ignoreStatusCodes: [ 404 ], cache: marudorCache, cacheTTL: 60 * 60 * 24 * 30 })
+    if (response.length > 0)
+        return response[0]
+}
+
 export const getIRISDepartures = async (evaNumber: number, lookahead?: number, lookbehind?: number): Promise<MarudorIrisAbfahrtenResponse | void> =>
     await request(ApiModule.MARUDOR, '/iris/v2/abfahrten/[evaNumber]', { evaNumber: String(evaNumber), lookahead: lookahead ? String(lookahead) : null, lookbehind: lookbehind ? String(lookbehind) : null }, { ignoreStatusCodes: [404], cache: marudorCache, cacheTTL: 60 * 10, useGetArguments: ['lookahead', 'lookbehind'] })
 
