@@ -11,11 +11,11 @@ const rabbitAsyncHandler = (callback: InternalRabbitCallback): RabbitCallback =>
                 else ack()
             }).catch(e => {
                 ack({ error: e.toString() })
-                error(`Error while handling (callback) rabbit message: ${msg.fields.routingKey}: ${msg.content.toString()} ${e}.`)
+                error(`Error while handling (callback) rabbit message: ${msg.fields.routingKey}: ${msg.content.toString()} ${e}\n${e.stack}.`)
             })
         } catch (e: any) {
             ack({ error: e.toString() })
-            error(`Error while handling rabbit message: ${msg.fields.routingKey}: ${msg.content.toString()}: ${e}.`)
+            error(`Error while handling rabbit message: ${msg.fields.routingKey}: ${msg.content.toString()}: ${e}\n${e.stack}.`)
         }
     }
 }
