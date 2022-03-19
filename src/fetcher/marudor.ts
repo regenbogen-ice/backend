@@ -109,7 +109,7 @@ export const getStationByEva = async (evaNumber: number): Promise<MarudorStation
     
 export const getEvaByStation = async (station: string): Promise<MarudorStationPlace | void> => {
     const response = await request(ApiModule.MARUDOR, '/stopPlace/v1/search/[station]', { station, max: '1' }, { useGetArguments: ['max'], ignoreStatusCodes: [ 404 ], cache: marudorCache, cacheTTL: 60 * 60 * 24 * 30 })
-    if (response.length > 0)
+    if (response && response.length > 0)
         return response[0]
 }
 
