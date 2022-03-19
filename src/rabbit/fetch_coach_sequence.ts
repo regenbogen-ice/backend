@@ -88,10 +88,12 @@ const createTrainTripVehicle = async (trainId: number, groupIndex: number, train
 export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSequence) => {
     const coachSequence = await getCoachSequence(msg.trainNumber, msg.evaDeparture, msg.evaNumber)
     if (!coachSequence) return
+
+    const vehicleGroups = coachSequence.sequence.groups.filter(e => +e.number == msg.trainNumber)
     
-    for (const [originalGroupIndex, coaches] of coachSequence.sequence.groups.entries()) {
-        if (+coaches.number != msg.trainNumber || coachSequence.sequence.groups === null || coaches.coaches === null) continue
-        const groupIndex = coachSequence.direction ? originalGroupIndex : coachSequence.sequence.groups.length -originalGroupIndex - 1
+    for (const [originalGroupIndex, coaches] of vehicleGroups.entries()) {
+        if (+coaches.number != msg.trainNumber || vehicleGroups === null || coaches.coaches === null) continue
+        const groupIndex = coachSequence.direction ? originalGroupIndex : vehicleGroups.length -originalGroupIndex - 1
         if (coaches.name.includes('planned') || !coaches.baureihe) {
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
             continue
