@@ -7,7 +7,7 @@ let fetchedHour: number | null = null
 
 export const autoFetch = () => {
     const hour = DateTime.now().hour
-    if (hour % 2 == 0 && fetchedHour != hour) {
+    if (fetchedHour != hour) {
         fetchedHour = hour
         info(`Autofetch running.`)
         rabbit.publish('fetch_train_numbers', { evaNumbers: staticConfig.AUTO_FETCH_EVA_NUMBERS })
