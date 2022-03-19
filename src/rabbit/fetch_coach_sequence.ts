@@ -90,7 +90,7 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
     if (!coachSequence) return
     
     for (const [originalGroupIndex, coaches] of coachSequence.sequence.groups.entries()) {
-        if (+coaches.number != msg.trainNumber) continue
+        if (+coaches.number != msg.trainNumber || coachSequence.sequence.groups === null || coaches.coaches === null) continue
         const groupIndex = coachSequence.direction ? originalGroupIndex : coachSequence.sequence.groups.length -originalGroupIndex - 1
         if (coaches.name.includes('planned') || !coaches.baureihe) {
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
