@@ -8,7 +8,7 @@ export const rabbit = new Rabbit(process.env.RABBIT_URL || 'amqp://localhost')
 
 
 rabbit.on('connected', () => {
-    info(`Rabbit connected,`)
+    info(`Rabbit connected.`)
 })
 
 rabbit.on('disconnect', (err = new Error(`Rabbitmq disconnected.`)) => {
