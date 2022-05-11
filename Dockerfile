@@ -1,3 +1,21 @@
+FROM node:16-alpine as base
+WORKDIR /app
+
+COPY package.json yarn.lock ./
+
+FROM base as dependencies
+
+RUN yarn install --cache-folder ./ycache --immutable --immutable-cache --production=false
+RUN rm -rf ./yache
+
+FROM dependencies as build
+
+ENV NODE_ENV=production
+COPY src ./src
+COPY knexfile.js tsconfig.json ./
+RUN yarn run build
+
+
 FROM node:16-alpine
 WORKDIR /app
 
@@ -11,18 +29,13 @@ ENV MYSQL_DATABASE=regenbogenice
 ENV MYSQL_USER=regenbogenice
 ENV MYSQL_PASSWORD=
 
-COPY ./package.json .
-COPY ./yarn.lock .
-
-RUN yarn install --production=false
-
-COPY ./tsconfig.json .
-COPY ./src ./src
-COPY ./migrations ./migrations
-COPY ./knexfile.js .
+COPY --from=build /app/node_modules/ ./node_modules/
+COPY --from=build /app/dist/ ./dist/
+COPY --from=build /app/knexfile.js .
+COPY --from=build /app/package.json ./
 COPY ./docker_start.sh .
+COPY ./migrations/ ./migrations
 RUN chmod a+x docker_start.sh
 
-RUN yarn run build
-
+EXPOSE 80
 CMD ["/app/docker_start.sh"]
