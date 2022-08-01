@@ -4,7 +4,7 @@ import { ApiModule, request } from './request.js'
 const marudorCache = new Cache('marudor', 60)
 
 type MarudorStationPlace = { evaNumber: string, name: string }
-type MarudorDeparture = {
+export type MarudorDeparture = {
     initialDeparture: string,
     arrival: {
         scheduledPlatform: string,

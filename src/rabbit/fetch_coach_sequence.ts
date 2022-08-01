@@ -4,11 +4,12 @@ import { toSQLTimestamp } from '../dateTimeFormat.js'
 import { getCoachSequence, getEvaByStation } from '../fetcher/marudor.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
+import staticConfig from '../staticConfig.js'
 
 type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: string, evaDeparture: string, evaNumber: number }
 
 
-const getTrainVehicle = async (train_vehicle_number: number, train_vehicle_name: string, train_type: string, building_series: number): Promise<number> => {
+const getTrainVehicle = async (train_vehicle_number: number, train_vehicle_name: string, train_type: string, building_series: number | null): Promise<number> => {
     const trainVehicle = await database('train_vehicle').where({ train_vehicle_number }).select('*').first()
     if (!trainVehicle) {
         debug(`Train vehicle ${train_vehicle_number} doesn't exists. Inserting.`)
@@ -94,12 +95,16 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
     for (const [originalGroupIndex, coaches] of vehicleGroups.entries()) {
         if (+coaches.number != msg.trainNumber || vehicleGroups === null || coaches.coaches === null) continue
         const groupIndex = coachSequence.direction ? originalGroupIndex : vehicleGroups.length -originalGroupIndex - 1
-        if (coaches.name.includes('planned') || !coaches.baureihe) {
+        if (coaches.name.includes('planned') || (!coaches.baureihe && msg.trainType !== 'IC')) {
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
             continue
         }
-        const trainVehicleNumber = +coaches.name.replace(msg.trainType.toUpperCase(), '')
-        const trainVehicleId = await getTrainVehicle(trainVehicleNumber, coaches.trainName, msg.trainType, +coaches.baureihe.baureihe)
+        const trainVehicleNumber = +(staticConfig.TRAIN_TYPE_FIND_NUMBER_REPLACEMENT[msg.trainType.toUpperCase()](coaches.name))
+        if (!trainVehicleNumber) {
+            debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a train without product group.`)
+            continue
+        }
+        const trainVehicleId = await getTrainVehicle(trainVehicleNumber, coaches.trainName, msg.trainType, coaches.baureihe ? +coaches.baureihe.baureihe : null)
         if (!(await checkCoachIntegrity(trainVehicleId, coaches.coaches))) {
             debug(`No coach integrity. Creating coaches.`)
             await createCoaches(trainVehicleId, coaches.coaches)
