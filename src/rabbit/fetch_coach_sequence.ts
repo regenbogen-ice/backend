@@ -29,8 +29,8 @@ const getTrainVehicle = async (train_vehicle_number: number, train_vehicle_name:
 
 const checkCoachIntegrity = async (trainVehicleId: number, coaches: { uic: string, category: string, class: number, type: string }[]): Promise<boolean> => {
     const coachSequence = await database('coach_sequence').where({ train_vehicle_id: trainVehicleId }).orderBy('timestamp', 'desc').select('id').first()
-    if (coachSequence.length === 0) return false
-    const coachSequenceId = coachSequence[0].id
+    if (!coachSequence) return false
+    const coachSequenceId = coachSequence.id
     for (const [coachIndex, coach] of coaches.entries()) {
         const databaseCoach = await database('coach').where({
             coach_sequence_id: coachSequenceId,
