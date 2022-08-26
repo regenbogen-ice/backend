@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import database from '../database.js'
 import { toSQLTimestamp } from '../dateTimeFormat.js'
-import { getCoachSequence, getEvaByStation } from '../fetcher/marudor.js'
+import { getCoachSequence, getEvaByStation } from '../fetcher/bahn_expert.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 import staticConfig from '../staticConfig.js'

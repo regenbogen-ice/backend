@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import database from '../database.js'
-import { marudorToSQL, toSQLTimestamp } from '../dateTimeFormat.js'
-import { getTrainDetails } from '../fetcher/marudor.js'
+import { bahnExpertToSQL, toSQLTimestamp } from '../dateTimeFormat.js'
+import { getTrainDetails } from '../fetcher/bahn_expert.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 
@@ -16,10 +16,10 @@ export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDeta
             index,
             cancelled: stop.cancelled,
             station: +stop.station.id,
-            scheduled_departure: stop.departure ? marudorToSQL(stop.departure.scheduledTime) : null,
-            departure: stop.departure ?  marudorToSQL(stop.departure.time) : null,
-            scheduled_arrival: stop.arrival ? marudorToSQL(stop.arrival.scheduledTime) : null,
-            arrival: stop.arrival ? marudorToSQL(stop.arrival.time) : null
+            scheduled_departure: stop.departure ? bahnExpertToSQL(stop.departure.scheduledTime) : null,
+            departure: stop.departure ?  bahnExpertToSQL(stop.departure.time) : null,
+            scheduled_arrival: stop.arrival ? bahnExpertToSQL(stop.arrival.scheduledTime) : null,
+            arrival: stop.arrival ? bahnExpertToSQL(stop.arrival.time) : null
         }
     })
 

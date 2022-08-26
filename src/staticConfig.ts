@@ -1,4 +1,4 @@
-import { MarudorDeparture } from "./fetcher/marudor.js"
+import { BahnExpertDeparture } from "./fetcher/bahn_expert.js"
 
 type StaticConfig = {
     IRIS_LOOKAHEAD: number,
