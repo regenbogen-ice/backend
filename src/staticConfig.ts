@@ -3,16 +3,11 @@ import { BahnExpertDeparture } from "./fetcher/bahn_expert.js"
 type StaticConfig = {
     IRIS_LOOKAHEAD: number,
     FETCHABLE_TRAIN_TYPES: Array<string>,
-    TRAIN_TYPE_FIND_NUMBER_REPLACEMENT: { [key: string]: (s: string) => string },
     AUTO_FETCH_EVA_NUMBERS: Array<number>
 }
 const staticConfig: StaticConfig = {
     IRIS_LOOKAHEAD: 60 * 24,
     FETCHABLE_TRAIN_TYPES: ['ICE', 'IC'],
-    TRAIN_TYPE_FIND_NUMBER_REPLACEMENT: {
-        'ICE': (s) => s.replace('ICE', ''),
-        'IC': (s) => s.includes('ICK') ? s.replace('ICK', '') : 'NaN'
-    },
 
     AUTO_FETCH_EVA_NUMBERS: [
         8002549, // Hamburg

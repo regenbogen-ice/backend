@@ -99,12 +99,17 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
             continue
         }
-        const trainVehicleNumber = +(staticConfig.TRAIN_TYPE_FIND_NUMBER_REPLACEMENT[msg.trainType.toUpperCase()](coaches.name))
-        if (!trainVehicleNumber) {
+        if (!(coaches.name.includes('ICE') || coaches.name.includes('ICK') || coaches.name.includes('ICD')) || coaches.name.length < 3) {
+            debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a non fetchable train.`)
+            continue
+        }
+        const trainType = coaches.name.slice(0,3).toUpperCase()
+        const trainVehicleNumber = +coaches.name.slice(3)
+        if (!trainVehicleNumber || !trainType) {
             debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a train without product group.`)
             continue
         }
-        const trainVehicleId = await getTrainVehicle(trainVehicleNumber, coaches.trainName, msg.trainType, coaches.baureihe ? +coaches.baureihe.baureihe : null)
+        const trainVehicleId = await getTrainVehicle(trainVehicleNumber, coaches.trainName, trainType, coaches.baureihe && coaches.baureihe.baureihe ? +coaches.baureihe.baureihe : null)
         if (!(await checkCoachIntegrity(trainVehicleId, coaches.coaches))) {
             debug(`No coach integrity. Creating coaches.`)
             await createCoaches(trainVehicleId, coaches.coaches)
