@@ -10,6 +10,11 @@ type FetchTrainDetails = { trainId: number, trainNumber: number, trainType: numb
 export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDetails) => {
     const trainDetails = await getTrainDetails(msg.trainType + String(msg.trainNumber), msg.evaNumber, msg.initialDeparture)
     if (!trainDetails) return
+    if (trainDetails.cancelled) {
+        debug(`${msg.trainId} was cancelled.`)
+        await database('train_trip').where({ id: msg.trainId }).delete()
+        return
+    }
     const stops = trainDetails.stops.map((stop, index) => {
         return {
             train_trip_id: msg.trainId,
