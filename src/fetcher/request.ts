@@ -3,7 +3,7 @@ import { Cache } from '../cache.js'
 import { error } from '../logger.js'
 
 export const ApiModule = {
-    MARUDOR: process.env.MARUDOR_API_PATH || "https://marudor.de/api"
+    BAHN_EXPERT: process.env.BAHN_EXPERT_API_PATH || "https://bahn.expert/api"
 }
 
 type ApiModuleType = string

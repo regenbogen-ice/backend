@@ -1,6 +1,14 @@
-export default {
+import { BahnExpertDeparture } from "./fetcher/bahn_expert.js"
+
+type StaticConfig = {
+    IRIS_LOOKAHEAD: number,
+    FETCHABLE_TRAIN_TYPES: Array<string>,
+    AUTO_FETCH_EVA_NUMBERS: Array<number>
+}
+const staticConfig: StaticConfig = {
     IRIS_LOOKAHEAD: 60 * 24,
-    FETCHABLE_TRAIN_TYPES: ['ICE'],
+    FETCHABLE_TRAIN_TYPES: ['ICE', 'IC'],
+
     AUTO_FETCH_EVA_NUMBERS: [
         8002549, // Hamburg
         8000050, // Bremen
@@ -23,3 +31,5 @@ export default {
         8011160, // Berlin
     ]
 }
+
+export default staticConfig

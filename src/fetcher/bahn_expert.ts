@@ -1,10 +1,10 @@
 import { Cache } from '../cache.js'
 import { ApiModule, request } from './request.js'
 
-const marudorCache = new Cache('marudor', 60)
+const bahnExpertCache = new Cache('bahn_expert', 60)
 
-type MarudorStationPlace = { evaNumber: string, name: string }
-type MarudorDeparture = {
+type BahnExpertStationPlace = { evaNumber: string, name: string }
+export type BahnExpertDeparture = {
     initialDeparture: string,
     arrival: {
         scheduledPlatform: string,
@@ -51,8 +51,8 @@ type MarudorDeparture = {
         operator: { name: string, icoX: number }
     }
 }
-type MarudorIrisAbfahrtenResponse = { departures: MarudorDeparture[], wings: { [key: string]: MarudorDeparture } }
-type MarudorCoachSequenceType = {
+type BahnExpertIrisAbfahrtenResponse = { departures: BahnExpertDeparture[], wings: { [key: string]: BahnExpertDeparture } }
+type BahnExpertCoachSequenceType = {
     stop: { stopPlace: { name: string, evaNumber: string } },
     product: { number: string, type: string, line: string },
     sequence: { groups: {
@@ -78,7 +78,7 @@ type MarudorCoachSequenceType = {
     direction: boolean
 }
 
-type MarudorDetailsType = {
+type BahnExpertDetailsType = {
     cancelled: boolean,
     changeDuration: number,
     finalDestination: string,
@@ -103,21 +103,21 @@ type MarudorDetailsType = {
     }[]
 }
 
-export const getStationByEva = async (evaNumber: number): Promise<MarudorStationPlace | void> => 
-    await request(ApiModule.MARUDOR, '/stopPlace/v1/[evaNumber]', { evaNumber: String(evaNumber) }, { ignoreStatusCodes: [ 404 ], cache: marudorCache, cacheTTL: 60 * 60 * 24 * 30 })
+export const getStationByEva = async (evaNumber: number): Promise<BahnExpertStationPlace | void> => 
+    await request(ApiModule.BAHN_EXPERT, '/stopPlace/v1/[evaNumber]', { evaNumber: String(evaNumber) }, { ignoreStatusCodes: [ 404 ], cache: bahnExpertCache, cacheTTL: 60 * 60 * 24 * 30 })
 
     
-export const getEvaByStation = async (station: string): Promise<MarudorStationPlace | void> => {
-    const response = await request(ApiModule.MARUDOR, '/stopPlace/v1/search/[station]', { station, max: '1' }, { useGetArguments: ['max'], ignoreStatusCodes: [ 404 ], cache: marudorCache, cacheTTL: 60 * 60 * 24 * 30 })
+export const getEvaByStation = async (station: string): Promise<BahnExpertStationPlace | void> => {
+    const response = await request(ApiModule.BAHN_EXPERT, '/stopPlace/v1/search/[station]', { station, max: '1' }, { useGetArguments: ['max'], ignoreStatusCodes: [ 404 ], cache: bahnExpertCache, cacheTTL: 60 * 60 * 24 * 30 })
     if (response && response.length > 0)
         return response[0]
 }
 
-export const getIRISDepartures = async (evaNumber: number, lookahead?: number, lookbehind?: number): Promise<MarudorIrisAbfahrtenResponse | void> =>
-    await request(ApiModule.MARUDOR, '/iris/v2/abfahrten/[evaNumber]', { evaNumber: String(evaNumber), lookahead: lookahead ? String(lookahead) : null, lookbehind: lookbehind ? String(lookbehind) : null }, { ignoreStatusCodes: [404], cache: marudorCache, cacheTTL: 60 * 10, useGetArguments: ['lookahead', 'lookbehind'] })
+export const getIRISDepartures = async (evaNumber: number, lookahead?: number, lookbehind?: number): Promise<BahnExpertIrisAbfahrtenResponse | void> =>
+    await request(ApiModule.BAHN_EXPERT, '/iris/v2/abfahrten/[evaNumber]', { evaNumber: String(evaNumber), lookahead: lookahead ? String(lookahead) : null, lookbehind: lookbehind ? String(lookbehind) : null }, { ignoreStatusCodes: [404], cache: bahnExpertCache, cacheTTL: 60 * 10, useGetArguments: ['lookahead', 'lookbehind'] })
 
-export const getCoachSequence = async (trainNumber: number, departure: string, evaNumber: number): Promise<MarudorCoachSequenceType | void> =>
-    await request(ApiModule.MARUDOR, '/reihung/v4/wagen/[trainNumber]', { trainNumber: String(trainNumber), departure, evaNumber: String(evaNumber) }, { ignoreStatusCodes: [404], cache: marudorCache, cacheTTL: 60 * 10, useGetArguments: ['departure', 'evaNumber']})
+export const getCoachSequence = async (trainNumber: number, departure: string, evaNumber: number): Promise<BahnExpertCoachSequenceType | void> =>
+    await request(ApiModule.BAHN_EXPERT, '/reihung/v4/wagen/[trainNumber]', { trainNumber: String(trainNumber), departure, evaNumber: String(evaNumber) }, { ignoreStatusCodes: [404], cache: bahnExpertCache, cacheTTL: 60 * 10, useGetArguments: ['departure', 'evaNumber']})
 
-export const getTrainDetails = async (trainName: string, station: number, date: string): Promise<MarudorDetailsType | void> => 
-    await request(ApiModule.MARUDOR, '/hafas/v2/details/[trainName]', { trainName, station: String(station), date }, { cache: marudorCache, cacheTTL: 60 * 5, useGetArguments: [ 'station', 'date'], ignoreStatusCodes: [404]})
+export const getTrainDetails = async (trainName: string, station: number, date: string): Promise<BahnExpertDetailsType | void> => 
+    await request(ApiModule.BAHN_EXPERT, '/hafas/v2/details/[trainName]', { trainName, station: String(station), date }, { cache: bahnExpertCache, cacheTTL: 60 * 5, useGetArguments: [ 'station', 'date'], ignoreStatusCodes: [404]})

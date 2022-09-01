@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon'
 import database from '../database.js'
-import { marudorToSQL } from '../dateTimeFormat.js'
-import { getIRISDepartures } from '../fetcher/marudor.js'
+import { bahnExpertToSQL } from '../dateTimeFormat.js'
+import { getIRISDepartures } from '../fetcher/bahn_expert.js'
 import { debug, error } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 import staticConfig from '../staticConfig.js'
@@ -28,14 +28,14 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 await database('train_trip').where({
                     train_type: train.train.type,
                     train_number: +train.train.number,
-                    initial_departure: marudorToSQL(train.initialDeparture)    
+                    initial_departure: bahnExpertToSQL(train.initialDeparture)    
                 }).delete()
                 continue
             }
             const existingTrain = await database('train_trip').where({
                 train_type: train.train.type,
                 train_number: +train.train.number,
-                initial_departure: marudorToSQL(train.initialDeparture)
+                initial_departure: bahnExpertToSQL(train.initialDeparture)
             }).select(['id', 'routes_update_expire', 'coach_sequence_update_expire'])
             let trainId = null
             let fetch_coaches = true
@@ -53,7 +53,7 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
                 const databaseTrain = await database('train_trip').insert({
                     train_type: train.train.type,
                     train_number: +train.train.number,
-                    initial_departure: marudorToSQL(train.initialDeparture)
+                    initial_departure: bahnExpertToSQL(train.initialDeparture)
                 })
                 trainId = databaseTrain[0]
                 debug(`Created train_trip ${trainId}.`)
