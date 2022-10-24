@@ -19,7 +19,7 @@ export const fetch_train_numbers = rabbitAsyncHandler(async (msg: FetchTrainNumb
         const allDepartures = departuresResponse.departures
         allDepartures.concat(Object.values(departuresResponse.wings))
         const departures = allDepartures.filter(e =>
-            staticConfig.FETCHABLE_TRAIN_TYPES.includes(e.train.type) && e.reihung && !e.substitute && e.departure && !alreadyFetched.includes(e.train.name))
+            staticConfig.FETCHABLE_TRAIN_TYPES.includes(e.train.type) && !e.substitute && e.departure && !alreadyFetched.includes(e.train.name))
         debug(`Fetched ${departures.length} train_trips on evaNumber ${evaNumber}.`)
         for(const train of departures) {
             alreadyFetched.push(train.train.name)
