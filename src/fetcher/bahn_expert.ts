@@ -12,7 +12,6 @@ export type BahnExpertDeparture = {
         scheduledTime: string,
         time: string,
         delay: number,
-        reihung: boolean,
         cancelled: boolean,
         hidden: boolean
     },
@@ -24,7 +23,6 @@ export type BahnExpertDeparture = {
         scheduledTime: string,
         time: string,
         delay: number,
-        reihung: boolean,
         cancelled: boolean,
         hidden: boolean
     },
@@ -36,7 +34,6 @@ export type BahnExpertDeparture = {
     platform: string,
     rawId: string,
     ref: { trainNumber: string, trainType: string, train: string },
-    reihung: boolean,
     route: { additional: boolean, cancelled: boolean, showVia: boolean, name: string }[],
     scheduledDestination: string,
     scheduledPlatform: string,
@@ -94,8 +91,8 @@ type BahnExpertDetailsType = {
         matchId: string
     },
     stops: {
-        arrival: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, reihung: boolean, cancalled: boolean },
-        departure: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, reihung: boolean, cancalled: boolean },
+        arrival: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, cancalled: boolean },
+        departure: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, cancalled: boolean },
         station: { title: string, id: string },
         auslastung: { first: number, second: string },
         additional: boolean,
