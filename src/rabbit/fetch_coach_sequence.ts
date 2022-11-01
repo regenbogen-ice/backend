@@ -12,7 +12,7 @@ const getTrainVehicle = async (
     train_vehicle_number: number,
     train_vehicle_name: string,
     train_type: string,
-    building_series: { building_series: number, building_series_name: string } | null
+    building_series: { building_series: number | null, building_series_name: string } | null
     ): Promise<number> => {
     return (await database('train_vehicle').insert({
         train_vehicle_number,
@@ -109,8 +109,8 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
             trainVehicleNumber,
             coaches.trainName,
             trainType,
-            coaches.baureihe && coaches.baureihe.baureihe ? {
-                building_series: +coaches.baureihe.baureihe,
+            coaches.baureihe ? {
+                building_series: coaches.baureihe.baureihe ? +coaches.baureihe.baureihe : null,
                 building_series_name: coaches.baureihe.name
             } : null
         )
