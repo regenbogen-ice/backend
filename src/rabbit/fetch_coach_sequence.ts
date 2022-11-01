@@ -4,27 +4,23 @@ import { toSQLTimestamp } from '../dateTimeFormat.js'
 import { getCoachSequence, getEvaByStation } from '../fetcher/bahn_expert.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
-import staticConfig from '../staticConfig.js'
 
 type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: string, evaDeparture: string, evaNumber: number }
 
 
-const getTrainVehicle = async (train_vehicle_number: number, train_vehicle_name: string, train_type: string, building_series: number | null): Promise<number> => {
-    const trainVehicle = await database('train_vehicle').where({ train_vehicle_number }).select('*').first()
-    if (!trainVehicle) {
-        debug(`Train vehicle ${train_vehicle_number} doesn't exists. Inserting.`)
-        return (await database('train_vehicle').insert({
-            train_vehicle_number,
-            train_vehicle_name,
-            train_type,
-            building_series
-        }))[0]
-    }
-    if (trainVehicle.train_vehicle_name != train_vehicle_name) {
-        debug(`Train vehicle ${train_vehicle_number} changed its name to ${train_vehicle_name}.`)
-        await database('train_vehicle').where({ id: trainVehicle.id }).update({ train_vehicle_name })
-    }
-    return trainVehicle.id
+const getTrainVehicle = async (
+    train_vehicle_number: number,
+    train_vehicle_name: string,
+    train_type: string,
+    building_series: { building_series: number, building_series_name: string } | null
+    ): Promise<number> => {
+    return (await database('train_vehicle').insert({
+        train_vehicle_number,
+        train_vehicle_name,
+        train_type,
+        building_series: building_series?.building_series,
+        building_series_name: building_series?.building_series_name
+    }).onConflict('train_vehicle_number').merge())[0]
 }
 
 const checkCoachIntegrity = async (trainVehicleId: number, coaches: { uic: string, category: string, class: number, type: string }[]): Promise<boolean> => {
@@ -109,7 +105,15 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
             debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a train without product group.`)
             continue
         }
-        const trainVehicleId = await getTrainVehicle(trainVehicleNumber, coaches.trainName, trainType, coaches.baureihe && coaches.baureihe.baureihe ? +coaches.baureihe.baureihe : null)
+        const trainVehicleId = await getTrainVehicle(
+            trainVehicleNumber,
+            coaches.trainName,
+            trainType,
+            coaches.baureihe && coaches.baureihe.baureihe ? {
+                building_series: +coaches.baureihe.baureihe,
+                building_series_name: coaches.baureihe.name
+            } : null
+        )
         if (!(await checkCoachIntegrity(trainVehicleId, coaches.coaches))) {
             debug(`No coach integrity. Creating coaches.`)
             await createCoaches(trainVehicleId, coaches.coaches)
