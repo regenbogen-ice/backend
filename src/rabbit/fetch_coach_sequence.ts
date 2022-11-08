@@ -14,13 +14,18 @@ const getTrainVehicle = async (
     train_type: string,
     building_series: { building_series: number | null, building_series_name: string } | null
     ): Promise<number> => {
-    return (await database('train_vehicle').insert({
-        train_vehicle_number,
-        train_vehicle_name,
-        train_type,
-        building_series: building_series?.building_series,
-        building_series_name: building_series?.building_series_name
-    }).onConflict('train_vehicle_number').merge())[0]
+    let trainVehicleId = (await database('train_vehicle').insert({
+            train_vehicle_number,
+            train_vehicle_name,
+            train_type,
+            building_series: building_series?.building_series,
+            building_series_name: building_series?.building_series_name
+        }).onConflict('train_vehicle_number').merge())[0]
+    if (trainVehicleId) {
+        return trainVehicleId
+    } else {
+        return (await database('train_vehicle').where({ train_vehicle_number }).select(['id']).first())["id"]
+    }
 }
 
 const checkCoachIntegrity = async (trainVehicleId: number, coaches: { uic: string, category: string, class: number, type: string }[]): Promise<boolean> => {
