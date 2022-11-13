@@ -23,8 +23,10 @@ export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDeta
             station: +stop.station.id,
             scheduled_departure: stop.departure ? bahnExpertToSQL(stop.departure.scheduledTime) : null,
             departure: stop.departure ?  bahnExpertToSQL(stop.departure.time) : null,
+            departure_delay: stop.departure ? stop.departure.delay : null,
             scheduled_arrival: stop.arrival ? bahnExpertToSQL(stop.arrival.scheduledTime) : null,
-            arrival: stop.arrival ? bahnExpertToSQL(stop.arrival.time) : null
+            arrival: stop.arrival ? bahnExpertToSQL(stop.arrival.time) : null,
+            arrival_delay: stop.arrival ? stop.arrival.delay : null,
         }
     })
 
@@ -62,7 +64,9 @@ export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDeta
                 await database('train_trip_route').where({ id: stop.id }).update({
                     cancelled: newStop.cancelled,
                     departure: newStop.departure,
+                    departure_delay: newStop.departure_delay,
                     arrival: newStop.arrival,
+                    arrival_delay: newStop.arrival_delay,
                     updated: toSQLTimestamp(DateTime.now())
                 })
             }
