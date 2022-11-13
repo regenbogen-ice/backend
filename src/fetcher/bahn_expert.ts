@@ -114,7 +114,7 @@ export const getIRISDepartures = async (evaNumber: number, lookahead?: number, l
     await request(ApiModule.BAHN_EXPERT, '/iris/v2/abfahrten/[evaNumber]', { evaNumber: String(evaNumber), lookahead: lookahead ? String(lookahead) : null, lookbehind: lookbehind ? String(lookbehind) : null }, { ignoreStatusCodes: [404], cache: bahnExpertCache, cacheTTL: 60 * 10, useGetArguments: ['lookahead', 'lookbehind'] })
 
 export const getCoachSequence = async (trainNumber: number, departure: string, evaNumber: number): Promise<BahnExpertCoachSequenceType | void> =>
-    await request(ApiModule.BAHN_EXPERT, '/reihung/v4/wagen/[trainNumber]', { trainNumber: String(trainNumber), departure, evaNumber: String(evaNumber) }, { ignoreStatusCodes: [404], cache: bahnExpertCache, cacheTTL: 60 * 10, useGetArguments: ['departure', 'evaNumber']})
+    await request(ApiModule.BAHN_EXPERT, '/reihung/v4/wagen/[trainNumber]', { trainNumber: String(trainNumber), departure, evaNumber: String(evaNumber) }, { ignoreStatusCodes: [404], cache: bahnExpertCache, cacheTTL: 60 * 5, useGetArguments: ['departure', 'evaNumber']})
 
 export const getTrainDetails = async (trainName: string, station: number, date: string): Promise<BahnExpertDetailsType | void> => 
-    await request(ApiModule.BAHN_EXPERT, '/hafas/v2/details/[trainName]', { trainName, station: String(station), date }, { cache: bahnExpertCache, cacheTTL: 60 * 5, useGetArguments: [ 'station', 'date'], ignoreStatusCodes: [404]})
+    await request(ApiModule.BAHN_EXPERT, '/hafas/v2/details/[trainName]', { trainName, station: String(station), date }, { cache: bahnExpertCache, cacheTTL: 60 * 3, useGetArguments: [ 'station', 'date'], ignoreStatusCodes: [404]})

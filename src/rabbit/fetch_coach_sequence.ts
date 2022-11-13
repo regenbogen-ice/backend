@@ -28,33 +28,40 @@ const getTrainVehicle = async (
     }
 }
 
-const checkCoachIntegrity = async (trainVehicleId: number, coaches: { uic: string, category: string, class: number, type: string }[]): Promise<boolean> => {
-    const coachSequence = await database('coach_sequence').where({ train_vehicle_id: trainVehicleId }).orderBy('timestamp', 'desc').select('id').first()
-    if (!coachSequence) return false
-    const coachSequenceId = coachSequence.id
+const checkCoachIntegrity = async (trainVehicleId: number | null, coaches: { uic: string, category: string, class: number, type: string }[]): Promise<boolean> => {
+    const coachSequence = trainVehicleId ? await database('coach_sequence').where({ train_vehicle_id: trainVehicleId }).orderBy('timestamp', 'desc').select('id').first() : null
+    if (!coachSequence && trainVehicleId) return false
+    const coachSequenceId = coachSequence ? coachSequence.id : null
     for (const [coachIndex, coach] of coaches.entries()) {
-        const databaseCoach = await database('coach').where({
+        let sql = database('coach').where({
             coach_sequence_id: coachSequenceId,
             uic: coach.uic,
             category: coach.category,
             class: coach.class,
             type: coach.type
-        }).andWhere((builder) => {
-            builder.where({ index: coachIndex }).orWhere({ index: coaches.length - coachIndex - 1 })
-        }).first()
+        })
+        if (trainVehicleId) {
+            sql = sql.andWhere((builder) => {
+                builder.where({ index: coachIndex }).orWhere({ index: coaches.length - coachIndex - 1 })
+            })
+        }
+        const databaseCoach = await sql.first()
         if (!databaseCoach) return false
     }
     return true
 }
 
-const createCoaches = async (trainVehicleId: number, coaches: { uic: string, category: string, class: number, type: string }[]) => {
-    const coachSequence = await database('coach_sequence').insert({ train_vehicle_id: trainVehicleId })
-    const coachSequenceId = coachSequence[0]
+const createCoaches = async (trainVehicleId: number | null, coaches: { uic: string, category: string, class: number, type: string }[]) => {
+    let coachSequenceId = null
+    if (trainVehicleId) {
+        const coachSequence = await database('coach_sequence').insert({ train_vehicle_id: trainVehicleId })
+        coachSequenceId = coachSequence[0]
+    }
     for (const [coachIndex, coach] of coaches.entries()) {
         debug(`Create coach ${coach.uic} in sequence ${coachSequenceId}.`)
         await database('coach').insert({
             coach_sequence_id: coachSequenceId,
-            index: coachIndex,
+            index: trainVehicleId ? coachIndex : null,
             uic: coach.uic,
             category: coach.category,
             class: coach.class,
@@ -88,6 +95,7 @@ const createTrainTripVehicle = async (trainId: number, groupIndex: number, train
 }
 
 export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSequence) => {
+    debug(`Starting to fetch coach sequence for ${msg.trainType}${msg.trainNumber} (ID ${msg.trainId})`)
     const coachSequence = await getCoachSequence(msg.trainNumber, msg.evaDeparture, msg.evaNumber)
     if (!coachSequence) return
 
@@ -97,28 +105,32 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
         if (+coaches.number != msg.trainNumber || vehicleGroups === null || coaches.coaches === null) continue
         const groupIndex = coachSequence.direction ? originalGroupIndex : vehicleGroups.length -originalGroupIndex - 1
         if (coaches.name.includes('planned') || (!coaches.baureihe && msg.trainType !== 'IC')) {
-            debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned.`)
+            debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned because coaches name is ${coaches.name}.`)
             continue
         }
-        if (!(coaches.name.includes('ICE') || coaches.name.includes('ICK') || coaches.name.includes('ICD')) || coaches.name.length < 3) {
+        const IC_1 = (coaches.name.includes('regrouped') && msg.trainType == 'IC')
+        if (!(coaches.name.includes('ICE') || coaches.name.includes('ICK') || coaches.name.includes('ICD') || IC_1) || coaches.name.length < 3) {
             debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a non fetchable train.`)
             continue
         }
-        const trainType = coaches.name.slice(0,3).toUpperCase()
-        const trainVehicleNumber = +coaches.name.slice(3)
-        if (!trainVehicleNumber || !trainType) {
-            debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a train without product group.`)
-            continue
+        let trainVehicleId: number | null = null
+        if (!IC_1) {
+            const trainType = coaches.name.slice(0,3).toUpperCase()
+            const trainVehicleNumber = +coaches.name.slice(3)
+            if (!trainVehicleNumber || !trainType) {
+                debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a train without product group.`)
+                continue
+            }
+            trainVehicleId = await getTrainVehicle(
+                trainVehicleNumber,
+                coaches.trainName,
+                trainType,
+                coaches.baureihe ? {
+                    building_series: coaches.baureihe.baureihe ? +coaches.baureihe.baureihe : null,
+                    building_series_name: coaches.baureihe.name
+                } : null
+            )
         }
-        const trainVehicleId = await getTrainVehicle(
-            trainVehicleNumber,
-            coaches.trainName,
-            trainType,
-            coaches.baureihe ? {
-                building_series: coaches.baureihe.baureihe ? +coaches.baureihe.baureihe : null,
-                building_series_name: coaches.baureihe.name
-            } : null
-        )
         if (!(await checkCoachIntegrity(trainVehicleId, coaches.coaches))) {
             debug(`No coach integrity. Creating coaches.`)
             await createCoaches(trainVehicleId, coaches.coaches)
@@ -133,7 +145,9 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
         const origin = originStation ? +originStation.evaNumber : null
         const destinationStation = coaches.destinationName ? await getEvaByStation(coaches.destinationName) : null
         const destination = destinationStation ? +destinationStation.evaNumber : null
-        await createTrainTripVehicle(msg.trainId, groupIndex, trainVehicleId, origin, destination)
+        if (trainVehicleId) {
+            await createTrainTripVehicle(msg.trainId, groupIndex, trainVehicleId, origin, destination)
+        }
     }
     await database('train_trip').where({ id: msg.trainId }).update({ coach_sequence_update_expire: toSQLTimestamp(DateTime.now().plus({ hours: 1 })) })
-})
+}) 
