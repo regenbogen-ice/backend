@@ -108,7 +108,7 @@ export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSeq
             debug(`${msg.trainType}${msg.trainNumber}[${groupIndex}]: Vehicle is planned because coaches name is ${coaches.name}.`)
             continue
         }
-        const IC_1 = (coaches.name.includes('regrouped') && msg.trainType == 'IC')
+        const IC_1 = ((coaches.name.includes('regrouped') || coaches.name.includes('RP')) && msg.trainType == 'IC')
         if (!(coaches.name.includes('ICE') || coaches.name.includes('ICK') || coaches.name.includes('ICD') || IC_1) || coaches.name.length < 3) {
             debug(`Train ${msg.trainId}[${groupIndex}] (${msg.trainType}) seems to be a non fetchable train.`)
             continue
