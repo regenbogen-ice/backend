@@ -1,6 +1,7 @@
 import fetch, { Response } from 'node-fetch'
 import { Cache } from '../cache.js'
 import { error } from '../logger.js'
+import { incrementMetric } from '../metrics.js'
 
 export const ApiModule = {
     BAHN_EXPERT: process.env.BAHN_EXPERT_API_PATH || "https://bahn.expert/api"
@@ -24,6 +25,7 @@ export const request = async (
     path: string,
     args: { [key: string]: string | null },
     options?: { ignoreStatusCodes?: number[], cache?: Cache, cacheTTL?: number, useGetArguments?: string[] }) => {
+    let metric_path = `request_${path}`
     for (const [argName, argValue] of Object.entries(args)) {
         if (path.includes(`[${argName}]`) && argValue) {
             path = path.replace(`[${argName}]`, argValue)
@@ -43,9 +45,13 @@ export const request = async (
     if (options?.cache) {
         const cachedResponse = await options.cache.get(path)
         if (cachedResponse) {
+            metric_path += "{cached=true}"
+            incrementMetric(metric_path)
             return cachedResponse
         }
     }
+    metric_path += "{cached=false}"
+    incrementMetric(metric_path)
     const response = await checkRequest(path, await fetch(path), options?.ignoreStatusCodes)
     if (response && options?.cache) {
         options.cache.set(path, response, options.cacheTTL).catch(e => error(`Error while caching ${path}: ${e}`))

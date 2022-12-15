@@ -29,6 +29,9 @@ ENV MYSQL_DATABASE=regenbogenice
 ENV MYSQL_USER=regenbogenice
 ENV MYSQL_PASSWORD=
 
+ENV METRIC_HTTP_HOST=0.0.0.0
+ENV METRIC_HTTP_PORT=9000
+
 COPY --from=build /app/node_modules/ ./node_modules/
 COPY --from=build /app/dist/ ./dist/
 COPY --from=build /app/knexfile.js .
