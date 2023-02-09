@@ -29,7 +29,7 @@ if (process.env.PURGE_RABBIT_QUEUES_ON_STARTUP == 'true') {
     info(`Purged rabbit queues.`)
 }
 
-await rabbit.createQueue('fetch_train_numbers', {}, fetch_train_numbers)
-await rabbit.createQueue('fetch_coach_sequence', {}, fetch_coach_sequence)
-await rabbit.createQueue('fetch_train_details', {}, fetch_train_details)
+await rabbit.createQueue('fetch_train_numbers', { "x-max-length": 500 }, fetch_train_numbers)
+await rabbit.createQueue('fetch_coach_sequence', { "x-max-length": 2000 }, fetch_coach_sequence)
+await rabbit.createQueue('fetch_train_details', { "x-max-length": 2000 }, fetch_train_details)
 info(`Created rabbit queues.`)
