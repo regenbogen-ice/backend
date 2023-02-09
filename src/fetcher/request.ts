@@ -52,7 +52,10 @@ export const request = async (
     }
     metric_path += "{cached=false}"
     incrementMetric(metric_path)
-    const response = await checkRequest(path, await fetch(path), options?.ignoreStatusCodes)
+    const controller = new AbortController()
+    setTimeout(() => controller.abort(), 1000 * 5)
+    const fetch_response = await fetch(path, { signal: controller.signal })
+    const response = await checkRequest(path, fetch_response, options?.ignoreStatusCodes)
     if (response && options?.cache) {
         options.cache.set(path, response, options.cacheTTL).catch(e => error(`Error while caching ${path}: ${e}`))
     }
