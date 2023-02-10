@@ -8,10 +8,6 @@ import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 type FetchTrainDetails = { trainId: number, trainNumber: number, trainType: number, initialDeparture: string, evaNumber: number }
 
 export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDetails) => {
-    if (DateTime.fromISO(msg.initialDeparture) < DateTime.now().startOf('day') ) {
-        // this is a temporaly fix until HAFAS is working again
-        throw new Error(`Currently there is a HAFAS problem so hafas doesn't respond on trips whose initial departures are yesterday or earlier.`)
-    }
     const trainDetails = await getTrainDetails(msg.trainType + String(msg.trainNumber), msg.evaNumber, msg.initialDeparture)
     if (!trainDetails) return
     if (trainDetails.cancelled) {
