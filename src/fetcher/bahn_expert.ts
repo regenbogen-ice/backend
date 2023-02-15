@@ -65,7 +65,7 @@ type BahnExpertCoachSequenceType = {
         },
         coaches: {
             class: number,
-            category: string,
+            vehicleCategory: string,
             closed: boolean,
             uic: string,
             type: string,
