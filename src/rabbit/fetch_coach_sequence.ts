@@ -28,7 +28,7 @@ const getTrainVehicle = async (
     }
 }
 
-const checkCoachIntegrity = async (trainVehicleId: number | null, coaches: { uic: string, category: string, class: number, type: string }[]): Promise<boolean> => {
+const checkCoachIntegrity = async (trainVehicleId: number | null, coaches: { uic: string, vehicleCategory: string, class: number, type: string }[]): Promise<boolean> => {
     const coachSequence = trainVehicleId ? await database('coach_sequence').where({ train_vehicle_id: trainVehicleId }).orderBy('timestamp', 'desc').select('id').first() : null
     if (!coachSequence && trainVehicleId) return false
     const coachSequenceId = coachSequence ? coachSequence.id : null
@@ -36,7 +36,7 @@ const checkCoachIntegrity = async (trainVehicleId: number | null, coaches: { uic
         let sql = database('coach').where({
             coach_sequence_id: coachSequenceId,
             uic: coach.uic,
-            category: coach.category,
+            category: coach.vehicleCategory,
             class: coach.class,
             type: coach.type
         })
@@ -51,7 +51,7 @@ const checkCoachIntegrity = async (trainVehicleId: number | null, coaches: { uic
     return true
 }
 
-const createCoaches = async (trainVehicleId: number | null, coaches: { uic: string, category: string, class: number, type: string }[]) => {
+const createCoaches = async (trainVehicleId: number | null, coaches: { uic: string, vehicleCategory: string, class: number, type: string }[]) => {
     let coachSequenceId = null
     if (trainVehicleId) {
         const coachSequence = await database('coach_sequence').insert({ train_vehicle_id: trainVehicleId })
@@ -63,7 +63,7 @@ const createCoaches = async (trainVehicleId: number | null, coaches: { uic: stri
             coach_sequence_id: coachSequenceId,
             index: trainVehicleId ? coachIndex : null,
             uic: coach.uic,
-            category: coach.category,
+            category: coach.vehicleCategory,
             class: coach.class,
             type: coach.type
         })
