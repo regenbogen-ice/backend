@@ -93,7 +93,7 @@ type BahnExpertDetailsType = {
     stops: {
         arrival: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, cancalled: boolean },
         departure: { scheduledPlatform: string, platform: string, scheduledTime: string, time: string, delay: number, cancalled: boolean },
-        station: { title: string, id: string },
+        station: { name: string, evaNumber: string },
         auslastung: { first: number, second: string },
         additional: boolean,
         cancelled: boolean

@@ -20,7 +20,7 @@ export const fetch_train_details = rabbitAsyncHandler(async (msg: FetchTrainDeta
             train_trip_id: msg.trainId,
             index,
             cancelled: stop.cancelled,
-            station: +stop.station.id,
+            station: +stop.station.evaNumber,
             scheduled_departure: stop.departure ? bahnExpertToSQL(stop.departure.scheduledTime) : null,
             departure: stop.departure ?  bahnExpertToSQL(stop.departure.time) : null,
             departure_delay: stop.departure ? stop.departure.delay : null,
