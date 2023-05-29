@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon'
 import database from '../database.js'
 import { toSQLTimestamp } from '../dateTimeFormat.js'
-import { getCoachSequence, getEvaByStation } from '../fetcher/bahn_expert.js'
+import { getEvaByStation } from '../fetcher/bahn_expert.js'
+import { getCoachSequence } from '../fetcher/coach_sequence.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 
@@ -10,7 +11,7 @@ type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: str
 
 const getTrainVehicle = async (
     train_vehicle_number: number,
-    train_vehicle_name: string,
+    train_vehicle_name: string | null,
     train_type: string,
     building_series: { building_series: number | null, building_series_name: string } | null
     ): Promise<number> => {
@@ -95,10 +96,16 @@ const createTrainTripVehicle = async (trainId: number, groupIndex: number, train
 }
 
 export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSequence) => {
+    const coachSequenceUpdateExpire = (await database('train_trip').where({ id: msg.trainId }).select('coach_sequence_update_expire'))
+    if (coachSequenceUpdateExpire[0] && DateTime.fromJSDate(coachSequenceUpdateExpire[0]) > DateTime.now() ) {
+        return
+    }
+
     debug(`Starting to fetch coach sequence for ${msg.trainType}${msg.trainNumber} (ID ${msg.trainId})`)
-    const coachSequence = await getCoachSequence(msg.trainNumber, msg.evaDeparture, msg.evaNumber)
+    const coachSequence = await getCoachSequence(msg.trainType, msg.trainNumber, msg.evaNumber, DateTime.fromISO(msg.evaDeparture))
     if (!coachSequence) return
 
+    console.log(coachSequence, msg.trainNumber)
     const vehicleGroups = coachSequence.sequence.groups.filter(e => +e.number == msg.trainNumber)
     
     for (const [originalGroupIndex, coaches] of vehicleGroups.entries()) {
