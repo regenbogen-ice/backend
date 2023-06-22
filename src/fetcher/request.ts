@@ -1,6 +1,6 @@
 import fetch, { Response } from 'node-fetch'
 import { Cache } from '../cache.js'
-import { error } from '../logger.js'
+import { debug, error } from '../logger.js'
 import { incrementMetric } from '../metrics.js'
 
 export const ApiModule = {
@@ -24,7 +24,8 @@ export const request = async (
     apiModule: ApiModuleType,
     path: string,
     args: { [key: string]: string | null },
-    options?: { ignoreStatusCodes?: number[], cache?: Cache, cacheTTL?: number, useGetArguments?: string[] }) => {
+    options?: { ignoreStatusCodes?: number[], cache?: Cache, cacheTTL?: number, useGetArguments?: string[] },
+    maxRetries: number=3, retryCount: number=0): Promise<any> => {
     let metric_path = `request_${path}`
     for (const [argName, argValue] of Object.entries(args)) {
         if (path.includes(`[${argName}]`) && argValue) {
@@ -52,12 +53,21 @@ export const request = async (
     }
     metric_path += "{cached=false}"
     incrementMetric(metric_path)
-    const controller = new AbortController()
-    setTimeout(() => controller.abort(), 1000 * 5)
-    const fetch_response = await fetch(path, { signal: controller.signal })
-    const response = await checkRequest(path, fetch_response, options?.ignoreStatusCodes)
-    if (response && options?.cache) {
-        options.cache.set(path, response, options.cacheTTL).catch(e => error(`Error while caching ${path}: ${e}`))
+    try {
+        const controller = new AbortController()
+        setTimeout(() => controller.abort(), 1000 * 20)
+        const fetch_response = await fetch(path, { signal: controller.signal })
+        const response = await checkRequest(path, fetch_response, options?.ignoreStatusCodes)
+        if (response && options?.cache) {
+            options.cache.set(path, response, options.cacheTTL).catch(e => error(`Error while caching ${path}: ${e}`))
+        }
+        return response
+    } catch (e) {
+        if (retryCount < maxRetries) {
+            debug(`Error ${e} while request to ${path}, retry ${retryCount}/${maxRetries}`)
+            return await request(apiModule, path, args, options, maxRetries, retryCount + 1)
+        } else {
+            throw e
+        }
     }
-    return response
 }
