@@ -2,13 +2,12 @@ import { DateTime } from 'luxon'
 import { info, debug } from './logger.js'
 import { rabbit } from './rabbit/rabbit.js'
 import staticConfig from './staticConfig.js'
-import fetch from 'node-fetch'
+import heartbeat from './heartbeat.js'
 
 let fetchedHour: number | null = null
 
 export const autoFetch = () => {
-    if (process.env.HEARTBEAT_URL)
-        fetch(process.env.HEARTBEAT_URL)
+    heartbeat()
     const hour = DateTime.now().hour
     if (fetchedHour != hour) {
         fetchedHour = hour
