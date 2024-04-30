@@ -5,7 +5,7 @@ import { getCoachSequence, getEvaByStation } from '../fetcher/bahn_expert.js'
 import { debug } from '../logger.js'
 import rabbitAsyncHandler from '../rabbitAsyncHandler.js'
 
-type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: string, evaDeparture: string, evaNumber: number }
+type FetchCoachSequence = { trainId: number, trainNumber: number, trainType: string, evaDeparture: string, evaNumber: number, initialDeparture: string }
 
 
 const getTrainVehicle = async (
@@ -96,7 +96,7 @@ const createTrainTripVehicle = async (trainId: number, groupIndex: number, train
 
 export const fetch_coach_sequence = rabbitAsyncHandler(async (msg: FetchCoachSequence) => {
     debug(`Starting to fetch coach sequence for ${msg.trainType}${msg.trainNumber} (ID ${msg.trainId})`)
-    const coachSequence = await getCoachSequence(msg.trainNumber, msg.evaDeparture, msg.evaNumber)
+    const coachSequence = await getCoachSequence(msg.trainNumber, msg.trainType, msg.initialDeparture, msg.evaDeparture, msg.evaNumber)
     if (!coachSequence) return
 
     const vehicleGroups = coachSequence.sequence.groups.filter(e => +e.number == msg.trainNumber)
